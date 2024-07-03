@@ -3,14 +3,11 @@ import { Sequelize, where, WhereOptions} from 'sequelize';
 import { DbType } from "./APITypes/dbInterface";
 import { DbModelType, UserModel } from "./APITypes/genericDbModelInterface";
 import { dynamicJsonBuilder } from "./dynamicJsonBuilder";
+import { Cadusu } from "./model/cadusu/cadusu";
 import {RequestPagination} from "./APITypes/IPRequesteInterface";
 import dotenv from "dotenv";
 
 dotenv.config();
-
-type typeController = 'getAll' | 'getOne' | 'create' | 'update';
-
-
 
 class DataBaseBuilder<dbType extends DbType> {
     private sequelize: Sequelize;
@@ -36,8 +33,6 @@ class RepositoryBuilder<dbModelType extends DbModelType = typeof UserModel>{
 
     async getAll<queryModel = {id: string}>(query?: queryModel, atributes?: string[], pagination?: {init: number, limit: number}): Promise<dbModelType[]>{
         const valuesExistQuery = dynamicJsonBuilder(query ? query : {});
-
-        // console.log(await this.dbModelInstantiated.findAll())
         
         return await this.dbModelInstantiated.findAll({
             attributes: atributes,
@@ -59,7 +54,7 @@ class RepositoryBuilder<dbModelType extends DbModelType = typeof UserModel>{
     }
 
     async create<valuesType = {username: string, email: string}>(values: valuesType) {
-        return await this.dbModelInstantiated.create(values)
+        return await this.dbModelInstantiated.create(values);
     }
 
     async update<id = {id: number}, valuesType = {username: string, email: string}>(id: id, values: valuesType){
@@ -97,10 +92,10 @@ class ServiceBuilder <repositoryModel extends RepositoryBuilder<DbModelType> = R
                 throw new Error();
             }
         }
-        console.log(values)
-        // const valuesCreated = await this.repository.create<values>(values);
+        
+        const valuesCreated = await this.repository.create<values>(values);
 
-        // return valuesCreated;
+        return valuesCreated;
     }
 
     async update<id = {id: string}, values = {username: string, email: string}> (id: id, values: values){
@@ -142,22 +137,46 @@ class ControllerBuilder<serviceType extends ServiceBuilder<RepositoryBuilder<DbM
         }
     }
 
-    // async createController<>(){}
+    async createController<bodyType>(){
+        return async (req: Request, res: Response, next:NextFunction) => {
+            try{
+                const result = await this.service.create<bodyType>(req.body as bodyType);
+
+                res.send(200).json(result);
+            }catch(err){
+                next(err);
+            }
+        }
+    }
+
+    async updateController<Id = {id: string}, BodyType = {}>(){
+        return async (req: Request, res: Response, next: NextFunction) => {
+            try{
+                const result = await this.service.update<Id, BodyType>({id: req.params} as Id, req.body as BodyType);
+
+                res.send(200).json(result);
+            }catch(err){
+                next(err);
+            }
+        }
+    }
 }
 
 const sequelize = new DataBaseBuilder({username: process.env.DB_USERNAME!, password: process.env.DB_PASS!, database: process.env.DB_NAME!, host: process.env.DB_HOST!, port: Number(process.env.DB_PORT! ), dialect: "postgres"}).getSequelize();
-const testeRepo = new RepositoryBuilder<typeof UserModel>(sequelize, UserModel);
+const testeRepo = new RepositoryBuilder<typeof Cadusu>(sequelize, Cadusu);
 const testeService = new ServiceBuilder<typeof testeRepo>(testeRepo);
 const testeController = new ControllerBuilder<typeof testeService>(testeService);
 
 const data = async() => {
     // 0309-00001
 
-    console.log(await testeRepo.getAll<{codtit: string}>({codtit: '0309-00001'}, ['codtit'], {init: 0, limit: 1}))
+    // console.log(await testeRepo.getAll<{codtit: string}>({codtit: '0309-00001'}, ['codtit'], {init: 0, limit: 1}))
 
     // console.log(await testeService.getAll<{codtit: string}>({codtit: '0309-00001'}, ['codtit'], {init: 0, limit: 1}))
 
-    // console.log(await testeRepo.update<{codtit: string}, {codname: string}>({codtit: "123"}, {codname: "pedro"}))
+    // console.log(await testeService.create<{codname: string}>({codname: "pedro"}))
+
+    // console.log(await testeService.update<{codtit: string}, {codname: string}>({codtit: "123"}, {codname: "pedro"}))
  
     // console.log(await testeController.getController("getAll"))
 }
