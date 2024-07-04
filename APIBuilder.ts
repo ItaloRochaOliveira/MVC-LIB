@@ -6,6 +6,8 @@ import { dynamicJsonBuilder } from "./dynamicJsonBuilder";
 import { Cadusu } from "./model/cadusu/cadusu";
 import {RequestPagination} from "./APITypes/IPRequesteInterface";
 import dotenv from "dotenv";
+import BadRequest from "./errors/BadRequest";
+import { Cadplano } from "./model/cadusu/cadplano";
 
 dotenv.config();
 
@@ -26,19 +28,19 @@ class DataBaseBuilder<dbType extends DbType> {
     }
 }
 
-class RepositoryBuilder<dbModelType extends DbModelType = typeof UserModel>{
-    constructor(private sequelize: Sequelize, private dbModel: dbModelType){}
+class RepositoryBuilder<dbModelType extends DbModelType = typeof UserModel >{
+    constructor(protected sequelize: Sequelize, protected dbModel: dbModelType){}
 
-    private dbModelInstantiated = this.dbModel.initModel(this.sequelize)
+    protected dbModelInstantiated = this.dbModel.initModel(this.sequelize);
 
     async getAll<queryModel = {id: string}>(query?: queryModel, atributes?: string[], pagination?: {init: number, limit: number}): Promise<dbModelType[]>{
         const valuesExistQuery = dynamicJsonBuilder(query ? query : {});
         
         return await this.dbModelInstantiated.findAll({
-            attributes: atributes,
+            attributes: atributes?.length ? atributes : '',
             where: valuesExistQuery.json as WhereOptions,
             offset: pagination?.init,
-            limit: pagination?.limit
+            limit: pagination?.limit,
         }) as unknown as dbModelType[];
     }
 
@@ -68,12 +70,54 @@ class RepositoryBuilder<dbModelType extends DbModelType = typeof UserModel>{
     // }
 }
 
+class RepositoryWithForeignBuilder<dbModelType extends DbModelType = typeof UserModel, DbModelWithForeignType extends DbModelType = typeof UserModel> extends RepositoryBuilder<DbModelType>{
+    private dbModelInstantiatedForForeign: dbModelType;
+    
+    constructor(sequelize: Sequelize, dbModel: dbModelType, private foreignModel: DbModelWithForeignType, private foreignKey: string){
+        super(sequelize, dbModel);
+        this.dbModelInstantiatedForForeign = this.foreignModel.initModel(this.sequelize);
+        this.dbModelInstantiated.belongsTo(this.dbModelInstantiatedForForeign, {foreignKey: this.foreignKey});
+        console.log(this.foreignKey)
+
+        this.getAll.prototype
+    }
+
+    async getAll<queryModel = {id: string}>(query?: queryModel, atributes?: string[], pagination?: {init: number, limit: number}): Promise<dbModelType[]>{
+        const valuesExistQuery = dynamicJsonBuilder(query ? query : {});
+        
+        return await this.dbModelInstantiated.findAll({
+            attributes: atributes?.length ? atributes : '',
+            where: valuesExistQuery.json as WhereOptions,
+            offset: pagination?.init,
+            limit: pagination?.limit,
+            include: [{
+                model: this.foreignModel
+            }]
+        }) as unknown as dbModelType[];
+    }
+
+    async getOne<queryModel = { id: string; }>(query?: queryModel | undefined, atributes?: string[], pagination?: { init: number; limit: number; }): Promise<DbModelType> {
+        const valuesExistQuery = dynamicJsonBuilder(query ? query : {});
+        
+        return await this.dbModelInstantiated.findOne({
+            attributes: atributes,
+            where: {valuesExistQuery} as WhereOptions,
+            offset: pagination?.init,
+            limit: pagination?.limit,
+            include: [{
+                model: this.foreignModel
+            }]
+        }) as unknown as dbModelType;
+    }
+ 
+}
+
 class ServiceBuilder <repositoryModel extends RepositoryBuilder<DbModelType> = RepositoryBuilder<typeof UserModel>>{
     constructor(private repository: repositoryModel){}
     async getAll<queryModel>(query?: queryModel, atributes?: string[], pagination?: {init: number, limit: number}): Promise<any>{
         const valuesExist = await this.repository.getAll<queryModel>(query, atributes, pagination);
 
-        if(!valuesExist.length) throw new Error();
+        if(!valuesExist.length) throw new BadRequest();
 
         return valuesExist; 
     }
@@ -81,7 +125,7 @@ class ServiceBuilder <repositoryModel extends RepositoryBuilder<DbModelType> = R
     async getOne<queryModel = {id: string}>(query?: queryModel, atributes?: string[], pagination?: {init: number, limit: number}): Promise<any>{
         const valuesExist = await this.repository.getOne(query, atributes, pagination);
 
-        if(!valuesExist) throw new Error();
+        if(!valuesExist) throw new BadRequest();
 
         return valuesExist; 
     }
@@ -89,7 +133,7 @@ class ServiceBuilder <repositoryModel extends RepositoryBuilder<DbModelType> = R
     async create<values = {username: string, email: string}>(values: values){
         for (const key in values) {
             if (!values[key]) {
-                throw new Error();
+                throw new BadRequest("O valor passado está vazio");
             }
         }
         
@@ -101,13 +145,17 @@ class ServiceBuilder <repositoryModel extends RepositoryBuilder<DbModelType> = R
     async update<id = {id: string}, values = {username: string, email: string}> (id: id, values: values){
         for (const key in values) {
             if (!values[key]) {
-                throw new Error();
+                throw new BadRequest("O valor passado está vazio");
             }
         }
 
         const valuesCreated = await this.repository.update(id, values);
 
         return valuesCreated;
+    }
+
+    async setVerification<ValueType, Type>(value: ValueType, type: Type){
+
     }
 }
 
@@ -164,6 +212,7 @@ class ControllerBuilder<serviceType extends ServiceBuilder<RepositoryBuilder<DbM
 
 const sequelize = new DataBaseBuilder({username: process.env.DB_USERNAME!, password: process.env.DB_PASS!, database: process.env.DB_NAME!, host: process.env.DB_HOST!, port: Number(process.env.DB_PORT! ), dialect: "postgres"}).getSequelize();
 const testeRepo = new RepositoryBuilder<typeof Cadusu>(sequelize, Cadusu);
+const testeRepoWithForeign = new RepositoryWithForeignBuilder<typeof Cadusu, typeof Cadplano>(sequelize, Cadusu, Cadplano, 'codplano');
 const testeService = new ServiceBuilder<typeof testeRepo>(testeRepo);
 const testeController = new ControllerBuilder<typeof testeService>(testeService);
 
@@ -171,6 +220,10 @@ const data = async() => {
     // 0309-00001
 
     // console.log(await testeRepo.getAll<{codtit: string}>({codtit: '0309-00001'}, ['codtit'], {init: 0, limit: 1}))
+
+    const values = await testeRepoWithForeign.getAll<{codtit: string}>({codtit: '0309-00001'}, [], {init: 0, limit: 1})
+
+    console.log(values[0])
 
     // console.log(await testeService.getAll<{codtit: string}>({codtit: '0309-00001'}, ['codtit'], {init: 0, limit: 1}))
 
