@@ -1,15 +1,14 @@
 {
-  "name": "idontknow",
+  "name": "api-builder",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start:dev": "tsx watch APIBuilder.ts",
+    "start:dev": "tsx watch ./teste/teste.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
-    
   },
-  "author": "",
+  "author": "Italo Rocha Oliveira",
   "license": "ISC",
-  "description": "",
+  "description": "Um builder de API para fazer o uso de qualquer camada de arquitetura em poucas linhas.",
   "devDependencies": {
     "@rocketseat/eslint-config": "2.2.2",
     "@types/base-64": "^1.0.2",
@@ -43,6 +42,7 @@
     "jsonwebtoken": "9.0.2",
     "pg": "^8.12.0",
     "pg-hstore": "2.3.4",
+    "reflect-metadata": "^0.2.2",
     "sequelize-auto": "^0.8.8",
     "swagger-ui-express": "5.0.1",
     "xlsx": "0.18.5",

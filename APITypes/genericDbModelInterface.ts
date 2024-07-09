@@ -9,7 +9,7 @@ export interface UserAtributes{
 
 interface UserAtributesCreator extends Omit<UserAtributes, 'id'>{};
 
-export interface DbModelType {
+export interface DbModelType{
   initModel(sequelize: Sequelize.Sequelize): any
 }
 
