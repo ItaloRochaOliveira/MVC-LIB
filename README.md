@@ -5,26 +5,35 @@ Ao instanciar qualquer classe do mvc-lib você terá acesso a quatro métodos: g
 
 ### Manual de uso 
 
+Adicionando o Sequelizer:
 ```Adicionando o Sequelizer:
 import {DataBaseBuilder} from "MVC-LIB";
 
 const sequelize = new DataBaseBuilder<typeOfDb>(username, password, database, host, port, dialect).getSequelizer();
 ```
+
+Adicionando o repositorio.
 ```Adicionando o repositorio.
 import {RepositoryBuilder} from "MVC-LIB";
 
 const repository = new Repository<DbSequelizeModel>(sequelize, dbModel);
 ```
+
+Adicionando o repositorio com tabela externa.
 ```Adicionando o repositorio com tabela externa.
 import {RepositoryWithForeignBuilder} from "MVC-LIB";
 
 const repository = new RepositoryWithForeignBuilder<DbSequelizeModel, DbSequelizeModelWithForeign>(sequelize, dbModel);
 ```
+
+Adicionando o service.
 ```Adicionando o service.
 import {ServiceBuilder} from "MVC-LIB";
 
 const service = new ServiceBuilder<RepositoryModel>(repository);
 ```
+
+Adicionando o controller.
 ```Adicionando o controller.
 import {ControllerBuilder} from "MVC-LIB";
 
