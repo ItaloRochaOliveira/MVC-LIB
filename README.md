@@ -2,7 +2,7 @@
 
 MVC-LIB is a library that helps developers reduce lines of code and simplify development. The ORM library used as the base is Sequelize. When instantiating any class from MVC-LIB, you will have access to four methods: getAll, getOne, create, and edit. All of these methods include validation and require type definitions.
 
-###Usage Manual
+### Usage Manual
 
 
 Adding Sequelize:
