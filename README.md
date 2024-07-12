@@ -1,44 +1,50 @@
 # MVC-LIB
 
-mvc lib é uma biblioteca que ajuda os desenvolvedores a diminuir as linhas de código e ajudar a desenvolver com mais facilidade. A biblioteca ORM utilizado como base é a Sequelize.
-Ao instanciar qualquer classe do mvc-lib você terá acesso a quatro métodos: getAll, getOne, create, edite. Todas elas possuem validação e precisam ser passados suas tipagens.
+MVC-LIB is a library that helps developers reduce lines of code and simplify development. The ORM library used as the base is Sequelize. When instantiating any class from MVC-LIB, you will have access to four methods: getAll, getOne, create, and edit. All of these methods include validation and require type definitions.
 
-### Manual de uso 
+###Usage Manual
 
-Adicionando o Sequelizer:
-```Adicionando o Sequelizer:
-import {DataBaseBuilder} from "MVC-LIB";
+
+Adding Sequelize:
+
+```
+import { DataBaseBuilder } from "MVC-LIB";
 
 const sequelize = new DataBaseBuilder<typeOfDb>(username, password, database, host, port, dialect).getSequelizer();
+
 ```
 
-Adicionando o repositorio.
-```Adicionando o repositorio.
-import {RepositoryBuilder} from "MVC-LIB";
+Adding the repository:
+```
+
+import { RepositoryBuilder } from "MVC-LIB";
 
 const repository = new Repository<DbSequelizeModel>(sequelize, dbModel);
 ```
 
-Adicionando o repositorio com tabela externa.
-```Adicionando o repositorio com tabela externa.
-import {RepositoryWithForeignBuilder} from "MVC-LIB";
+Adding the repository with a foreign table:
+
+```
+import { RepositoryWithForeignBuilder } from "MVC-LIB";
 
 const repository = new RepositoryWithForeignBuilder<DbSequelizeModel, DbSequelizeModelWithForeign>(sequelize, dbModel);
 ```
 
-Adicionando o service.
-```Adicionando o service.
-import {ServiceBuilder} from "MVC-LIB";
+Adding the service:
+
+```
+import { ServiceBuilder } from "MVC-LIB";
 
 const service = new ServiceBuilder<RepositoryModel>(repository);
 ```
 
-Adicionando o controller.
-```Adicionando o controller.
-import {ControllerBuilder} from "MVC-LIB";
+Adding the controller:
 
-const controller = new ControllerBuilder<ServieModel>(service);
+```
+import { ControllerBuilder } from "MVC-LIB";
 
-// caso o controller use middleware de error, terá que passar:
+const controller = new ControllerBuilder<ServiceModel>(service);
+
+// if the controller uses error middleware, you will need to pass:
 controller.errorMiddlewareFunction(true);
 ```
