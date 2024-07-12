@@ -2,9 +2,9 @@ import { NextFunction, Request, Response } from "express";
 import { Model, Sequelize, WhereOptions} from 'sequelize';
 import { DbType } from "./APITypes/dbInterface";
 import { DbModelType, UserModel } from "./APITypes/genericDbModelInterface";
-import { dynamicJsonBuilder } from "./dynamicJsonBuilder";
 import {RequestPagination} from "./APITypes/IPRequesteInterface";
 import BadRequest from "./errors/BadRequest";
+import { dynamicJsonBuilder } from "./utils/dynamicJsonBuilder";
 
 
 type Validator<T> = (value: any) => value is T;
